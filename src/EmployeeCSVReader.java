@@ -36,8 +36,9 @@ class EmployeeCSVReader {
                 double riceSubsidy = parseDoubleOrDefault(data[14], 0.0);
                 double phoneAllowance = parseDoubleOrDefault(data[15], 0.0);
                 double clothingAllowance = parseDoubleOrDefault(data[16], 0.0);
+                double hourlyRate = parseDoubleOrDefault(data[18], 0.0);
                 
-                CompensationDetails compensationDetails = new CompensationDetails(basicSalary, riceSubsidy, phoneAllowance, clothingAllowance);
+                CompensationDetails compensationDetails = new CompensationDetails(basicSalary, riceSubsidy, phoneAllowance, clothingAllowance, hourlyRate);
                 GovernmentContributions governmentContributions = new GovernmentContributions(employeeId, compensationDetails);
                 EmploymentStatus employmentStatus = EmploymentStatus.getEmploymentStatusByEmployeeId(employeeId);
 

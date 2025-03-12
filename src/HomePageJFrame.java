@@ -741,14 +741,21 @@ public class HomePageJFrame extends javax.swing.JFrame {
             GovernmentContributions contributions = employee.getGovernmentContributions();
             double totalDeductions = contributions.calculateTotalGovernmentContributions(basicSalary);
 
-            // Create Payroll Instance
-            Payroll payroll = new Payroll(12345, employeeId, basicSalary, totalDeductions, benefits, new ArrayList<>()); 
+            // ✅ Fetch hourly rate from CompensationDetails
+            double hourlyRate = compensation.getHourlyRate(); 
+
+            // ✅ Create Payroll instance
+            PayrollCalculator payroll = new Payroll(12345, employeeId, basicSalary, totalDeductions, benefits, new ArrayList<>());
+
+            // ✅ Compute earnings based on hours worked and hourly rate
+            double earnings = payroll.calculateEarnings(totalHoursWorked, hourlyRate);
             double netPay = payroll.calculateNetPay();
 
-            // Display Payroll Breakdown
+            // ✅ Update message to include proper earnings calculation
             String message = "=== Payroll Computation for " + employee.getFirstName() + " " + employee.getLastName() + " ===\n" +
                              "Total Hours Worked: " + totalHoursWorked + "\n" +
-                             "Gross Pay: " + (basicSalary + benefits) + "\n" +
+                             "Hourly Rate: " + hourlyRate + "\n" +
+                             "Gross Pay: " + earnings + "\n" +
                              "Total Deductions: " + totalDeductions + "\n" +
                              "Net Pay: " + netPay;
 

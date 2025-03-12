@@ -11,8 +11,7 @@ import java.util.List;
  *
  * @author rejoice
  */
-// Payroll class implementing PayrollCalculator
-class Payroll {
+class Payroll implements PayrollCalculator { 
     private final int payrollId;
     private final int employeeId;
     private final double basicSalary;
@@ -20,7 +19,6 @@ class Payroll {
     private final double benefits;
     private final List<Overtime> overtime;
     
-    // Define TIME_FORMAT inside the class
     private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("HH:mm");
 
     public Payroll(int payrollId, int employeeId, double basicSalary, double deductions, double benefits, List<Overtime> overtime) {
@@ -32,13 +30,32 @@ class Payroll {
         this.overtime = (overtime != null) ? Collections.unmodifiableList(overtime) : Collections.emptyList();
     }
 
+    @Override
+    public double calculateEarnings(double totalHoursWorked, double hourlyRate) {
+        double basePay = totalHoursWorked * hourlyRate; // ✅ Regular Pay
+        double overtimePay = overtime.stream()
+                .mapToDouble(o -> o.calculateOvertimePay(hourlyRate))
+                .sum(); // ✅ Overtime Pay
+        return basePay + overtimePay;
+    }
+
+    @Override
+    public double calculateBenefits() {
+        return benefits;
+    }
+
+    @Override
+    public double calculateTotalDeduction() {
+        return deductions;
+    }
+
+    @Override
     public double calculateNetPay() {
         return basicSalary + benefits - deductions + overtime.stream()
-                .mapToDouble(o -> o.calculateOvertimePay(basicSalary / 160))
+                .mapToDouble(o -> o.calculateOvertimePay(basicSalary / 160)) // Assuming 160 work hours per month
                 .sum();
     }
-    
-    // Helper method for calculating hours worked
+
     public static double calculateHoursWorked(String login, String logout) {
         LocalTime loginTime = LocalTime.parse(login, TIME_FORMAT);
         LocalTime logoutTime = LocalTime.parse(logout, TIME_FORMAT);
