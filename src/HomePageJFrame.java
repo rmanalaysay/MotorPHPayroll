@@ -1,8 +1,15 @@
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.text.ParseException;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
@@ -65,6 +72,20 @@ public class HomePageJFrame extends javax.swing.JFrame {
         SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm"); // 24-hour format
         Date now = new Date();
         jFormattedTextField2.setText(timeFormat.format(now)); // Set time out
+    }
+    
+    // Function to save the payroll breakdown to a file
+    private void savePayrollToFile(Employee employee, LocalDate startDate, LocalDate endDate, String payrollDetails) {
+        try {
+            String filename = "Payslip_" + employee.getEmployeeId() + "_" + startDate + "_to_" + endDate + ".txt";
+            File file = new File("src/" + filename);
+            FileWriter writer = new FileWriter(file);
+            writer.write(payrollDetails);
+            writer.close();
+            JOptionPane.showMessageDialog(this, "Payslip saved successfully: ", "Download Complete", JOptionPane.INFORMATION_MESSAGE);
+        } catch (IOException e) {
+            JOptionPane.showMessageDialog(this, "Error saving file: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
     }
                                                
     /**
@@ -426,6 +447,11 @@ public class HomePageJFrame extends javax.swing.JFrame {
 
         jButton5.setFont(new java.awt.Font("Helvetica Neue", 1, 14)); // NOI18N
         jButton5.setText("Generate");
+        jButton5.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton5ActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout jPanel4Layout = new javax.swing.GroupLayout(jPanel4);
         jPanel4.setLayout(jPanel4Layout);
@@ -643,7 +669,7 @@ public class HomePageJFrame extends javax.swing.JFrame {
         String endDate = jFormattedTextField4.getText();
         String leaveType = jComboBox1.getSelectedItem().toString(); // Get selected leave type
 
-        SimpleDateFormat dateFormat = new SimpleDateFormat("mm/dd/yyyy");
+        SimpleDateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy");
         dateFormat.setLenient(false); // Ensures strict date validation
 
         try {
@@ -668,6 +694,86 @@ public class HomePageJFrame extends javax.swing.JFrame {
             JOptionPane.showMessageDialog(this, "Invalid date format. Please use MM/dd/yyyy");
         }
     }//GEN-LAST:event_jButton4ActionPerformed
+
+    private void jButton5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton5ActionPerformed
+        // TODO add your handling code here:
+        try {
+            // Get Date Range 
+            String startDateStr = jFormattedTextField5.getText();
+            String endDateStr = jFormattedTextField6.getText();
+
+            // Convert input dates to LocalDate
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/dd/yyyy"); 
+            LocalDate startDate = LocalDate.parse(startDateStr, formatter);
+            LocalDate endDate = LocalDate.parse(endDateStr, formatter);
+
+
+            // Load Employee Data
+            List<Employee> employees = EmployeeCSVReader.loadEmployees();
+            Employee employee = employees.stream()
+                    .filter(emp -> emp.getEmployeeId() == employeeId)
+                    .findFirst()
+                    .orElse(null);
+
+            if (employee == null) {
+                JOptionPane.showMessageDialog(this, "Employee not found!", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            // Load Attendance Data
+            List<Attendance> attendanceRecords = AttendanceCSVReader.readAttendance();
+            List<Attendance> filteredAttendance = attendanceRecords.stream()
+                    .filter(att -> att.getEmployeeId() == employeeId &&
+                                   !att.getDate().isBefore(startDate) &&
+                                   !att.getDate().isAfter(endDate))
+                    .collect(Collectors.toList());
+
+            double totalHoursWorked = filteredAttendance.stream()
+                    .mapToDouble(Attendance::getHoursWorked)
+                    .sum();
+
+            // Retrieve Compensation Details
+            CompensationDetails compensation = employee.getCompensationDetails();
+            double basicSalary = compensation.getBasicSalary();
+            double benefits = compensation.getTotalBenefits();
+
+            // Retrieve Deductions (Assuming you have a method for deductions)
+            GovernmentContributions contributions = employee.getGovernmentContributions();
+            double totalDeductions = contributions.calculateTotalGovernmentContributions(basicSalary);
+
+            // Create Payroll Instance
+            Payroll payroll = new Payroll(12345, employeeId, basicSalary, totalDeductions, benefits, new ArrayList<>()); 
+            double netPay = payroll.calculateNetPay();
+
+            // Display Payroll Breakdown
+            String message = "=== Payroll Computation for " + employee.getFirstName() + " " + employee.getLastName() + " ===\n" +
+                             "Total Hours Worked: " + totalHoursWorked + "\n" +
+                             "Gross Pay: " + (basicSalary + benefits) + "\n" +
+                             "Total Deductions: " + totalDeductions + "\n" +
+                             "Net Pay: " + netPay;
+
+            // Custom button options
+            Object[] options = {"Download"};
+
+            int choice = JOptionPane.showOptionDialog(
+                this, 
+                message, 
+                "Payslip Breakdown", 
+                JOptionPane.DEFAULT_OPTION, 
+                JOptionPane.INFORMATION_MESSAGE, 
+                null, 
+                options, 
+                options[0]
+            );
+
+            if (choice == 0) { // If "Download" button is clicked
+                savePayrollToFile(employee, startDate, endDate, message);
+            }
+
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }//GEN-LAST:event_jButton5ActionPerformed
 
     /**
      * @param args the command line arguments
