@@ -17,7 +17,12 @@ class Overtime {
         this.hoursWorked = Math.max(0, hoursWorked);
     }
 
-    public double calculateOvertimePay(double hourlyRate) {
-        return hoursWorked * hourlyRate * OVERTIME_MULTIPLIER;
+    public int getHoursWorked() { // Added getter method
+        return hoursWorked;
+    }
+
+    public static double calculateOvertimePay(double totalHoursWorked, double hourlyRate) {
+        double overtimeHours = Math.max(0, totalHoursWorked - 160); // Assuming 160 regular hours
+        return overtimeHours * hourlyRate * OVERTIME_MULTIPLIER;
     }
 }

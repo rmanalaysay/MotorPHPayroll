@@ -8,7 +8,6 @@
  */
 // Interface for Payroll calculations
 interface PayrollCalculator {
-
     double calculateEarnings(double totalHoursWorked, double hourlyRate);
     double calculateBenefits();
     double calculateTotalDeduction();

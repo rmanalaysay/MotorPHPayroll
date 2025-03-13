@@ -1,7 +1,9 @@
 
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.text.ParseException;
@@ -24,6 +26,7 @@ import javax.swing.SwingUtilities;
 public class HomePageJFrame extends javax.swing.JFrame {
     
     private int employeeId; // Declare as an instance variable
+    
     /**
      * Creates new form HomePageJFrame
      */
@@ -72,6 +75,25 @@ public class HomePageJFrame extends javax.swing.JFrame {
         SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm"); // 24-hour format
         Date now = new Date();
         jFormattedTextField2.setText(timeFormat.format(now)); // Set time out
+    }
+    
+    private void writeLeaveToCSV(int employeeId, String lastName, String firstName, String leaveType, String startDate, String endDate) {
+        String filePath = Paths.get("src/CSVFiles/leaverequest.csv").toAbsolutePath().toString();
+        File file = new File(filePath);
+
+        String newEntry = employeeId + "," + lastName + "," + firstName + "," + leaveType + "," + startDate + "," + endDate;
+
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(file, true))) {
+            // Move to a new line before writing new data
+            writer.newLine(); 
+            writer.write(newEntry);
+            writer.flush();   // Ensure data is written
+
+            System.out.println("Leave request added: " + newEntry);
+        } catch (IOException e) {
+            JOptionPane.showMessageDialog(null, "Error writing to file: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
+        }
     }
     
     // Function to save the payroll breakdown to a file
@@ -611,6 +633,17 @@ public class HomePageJFrame extends javax.swing.JFrame {
         jFormattedTextField1.setText(timeIn); // Set the time in field
 
         // Show a dialog box with the time in message
+        JOptionPane.showMessageDialog(this, "Time In at " + timeIn, "Log In", JOptionPane.INFORMATION_MESSAGE);
+
+        // Fetch employee details from text fields
+        int empId = Integer.parseInt(jTextField3.getText());
+        String lastName = jTextField1.getText();
+        String firstName = jTextField2.getText();
+
+        // Update attendance record for login
+        AttendanceCSVReader.updateAttendance(empId, lastName, firstName, true);
+
+        // Show a dialog box with the time in message
         JOptionPane.showMessageDialog(this, "Time In at " + timeIn, "Log In", JOptionPane.INFORMATION_MESSAGE);  
     }//GEN-LAST:event_jButton2ActionPerformed
 
@@ -620,32 +653,24 @@ public class HomePageJFrame extends javax.swing.JFrame {
         Date now = new Date();
         String timeOut = timeFormat.format(now);
 
-        jFormattedTextField2.setText(timeOut); 
+        jFormattedTextField2.setText(timeOut);
 
-        String timeIn = jFormattedTextField1.getText(); 
-
+        String timeIn = jFormattedTextField1.getText();
         if (timeIn.isEmpty()) { // Prevent errors if time in is missing
             JOptionPane.showMessageDialog(this, "Please log in first!", "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
 
         try {
-            Date inTime = timeFormat.parse(timeIn);
-            Date outTime = timeFormat.parse(timeOut);
+            int empId = Integer.parseInt(jTextField3.getText());
+            String lastName = jTextField1.getText();
+            String firstName = jTextField2.getText();
 
-            long difference = outTime.getTime() - inTime.getTime();
-            long minutesWorked = difference / (60 * 1000);
-            long hoursWorked = minutesWorked / 60;
-            long remainingMinutes = minutesWorked % 60;
+            AttendanceCSVReader.updateAttendance(empId, lastName, firstName, false);
 
-            JOptionPane.showMessageDialog(this, 
-                "Time Out at " + timeOut + "\nTotal Hours Worked: " + hoursWorked + "h " + remainingMinutes + "m",
-                "Log Out",
-                JOptionPane.INFORMATION_MESSAGE
-            );
-
-        } catch (ParseException e) {
-            JOptionPane.showMessageDialog(this, "Invalid Time Format", "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Time Out at " + timeOut, "Log Out", JOptionPane.INFORMATION_MESSAGE);
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Error logging out!", "Error", JOptionPane.ERROR_MESSAGE);
         }
     }//GEN-LAST:event_jButton3ActionPerformed
 
@@ -667,32 +692,45 @@ public class HomePageJFrame extends javax.swing.JFrame {
         // TODO add your handling code here:
         String startDate = jFormattedTextField3.getText();
         String endDate = jFormattedTextField4.getText();
-        String leaveType = jComboBox1.getSelectedItem().toString(); // Get selected leave type
+        String leaveType = jComboBox1.getSelectedItem().toString();
 
         SimpleDateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy");
-        dateFormat.setLenient(false); // Ensures strict date validation
+        dateFormat.setLenient(false);
 
         try {
             Date start = dateFormat.parse(startDate);
             Date end = dateFormat.parse(endDate);
 
-            // Prevent submission if the end date is before the start date
             if (end.before(start)) {
                 JOptionPane.showMessageDialog(this, "End Date cannot be before Start Date.");
-                return; // ⬅️ Stop execution if the dates are invalid
+                return;
             }
 
-            // If the dates are valid, display the submission message
-            JOptionPane.showMessageDialog(this, 
-                "Leave Request Submitted:\n" + 
-                "Start Date: " + startDate + "\n" + 
-                "End Date: " + endDate + "\n" + 
-                "Leave Type: " + leaveType
+            List<Employee> employees = EmployeeCSVReader.loadEmployees();
+            Employee employee = employees.stream()
+                    .filter(emp -> emp.getEmployeeId() == employeeId)
+                    .findFirst()
+                    .orElse(null);
+
+            if (employee == null) {
+                JOptionPane.showMessageDialog(this, "Employee not found!", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            JOptionPane.showMessageDialog(this,
+                    "Leave Request Submitted and Saved:\n" +
+                            "Employee ID: " + employee.getEmployeeId() + "\n" +
+                            "Name: " + employee.getFirstName() + " " + employee.getLastName() + "\n" +
+                            "Start Date: " + startDate + "\n" +
+                            "End Date: " + endDate + "\n" +
+                            "Leave Type: " + leaveType
             );
 
-        } catch (Exception e) {
+            writeLeaveToCSV(employee.getEmployeeId(), employee.getLastName(), employee.getFirstName(), leaveType, startDate, endDate);
+
+        } catch (ParseException e) {
             JOptionPane.showMessageDialog(this, "Invalid date format. Please use MM/dd/yyyy");
-        }
+        }        
     }//GEN-LAST:event_jButton4ActionPerformed
 
     private void jButton5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton5ActionPerformed
@@ -702,11 +740,9 @@ public class HomePageJFrame extends javax.swing.JFrame {
             String startDateStr = jFormattedTextField5.getText();
             String endDateStr = jFormattedTextField6.getText();
 
-            // Convert input dates to LocalDate
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/dd/yyyy"); 
             LocalDate startDate = LocalDate.parse(startDateStr, formatter);
             LocalDate endDate = LocalDate.parse(endDateStr, formatter);
-
 
             // Load Employee Data
             List<Employee> employees = EmployeeCSVReader.loadEmployees();
@@ -720,7 +756,7 @@ public class HomePageJFrame extends javax.swing.JFrame {
                 return;
             }
 
-            // Load Attendance Data
+            // Load Attendance Records
             List<Attendance> attendanceRecords = AttendanceCSVReader.readAttendance();
             List<Attendance> filteredAttendance = attendanceRecords.stream()
                     .filter(att -> att.getEmployeeId() == employeeId &&
@@ -728,38 +764,48 @@ public class HomePageJFrame extends javax.swing.JFrame {
                                    !att.getDate().isAfter(endDate))
                     .collect(Collectors.toList());
 
+            // Calculate total hours worked and overtime
             double totalHoursWorked = filteredAttendance.stream()
                     .mapToDouble(Attendance::getHoursWorked)
                     .sum();
 
-            // Retrieve Compensation Details
+            List<Overtime> overtimeRecords = filteredAttendance.stream()
+                    .filter(att -> att.getOvertimeHours() > 0)
+                    .map(att -> new Overtime(employeeId, (int) att.getOvertimeHours()))
+                    .collect(Collectors.toList());
+
             CompensationDetails compensation = employee.getCompensationDetails();
-            double basicSalary = compensation.getBasicSalary();
-            double benefits = compensation.getTotalBenefits();
-
-            // Retrieve Deductions (Assuming you have a method for deductions)
             GovernmentContributions contributions = employee.getGovernmentContributions();
-            double totalDeductions = contributions.calculateTotalGovernmentContributions(basicSalary);
 
-            // ✅ Fetch hourly rate from CompensationDetails
-            double hourlyRate = compensation.getHourlyRate(); 
+            // Instantiate Payroll Object
+            Payroll payroll = new Payroll(
+                    employeeId,
+                    compensation,
+                    compensation.getTotalBenefits(),
+                    filteredAttendance,
+                    contributions
+            );
 
-            // ✅ Create Payroll instance
-            PayrollCalculator payroll = new Payroll(12345, employeeId, basicSalary, totalDeductions, benefits, new ArrayList<>());
-
-            // ✅ Compute earnings based on hours worked and hourly rate
-            double earnings = payroll.calculateEarnings(totalHoursWorked, hourlyRate);
+            // Compute Payroll Details
+            double grossPay = payroll.calculateEarnings(totalHoursWorked, compensation.getHourlyRate()) 
+                            + payroll.calculateBenefits();
+            double totalDeductions = payroll.calculateTotalDeduction();
             double netPay = payroll.calculateNetPay();
 
-            // ✅ Update message to include proper earnings calculation
-            String message = "=== Payroll Computation for " + employee.getFirstName() + " " + employee.getLastName() + " ===\n" +
+            // Display Payroll Breakdown
+            String message = "=== Payroll Computation ===\n" +
+                            "Employee ID: " + employee.getEmployeeId() + "\n" +
+                            "Full Name: " + employee.getFirstName() + " " + employee.getLastName() + "\n" +
+                            "Position: " + employee.getPosition() + "\n" +
+                            "Start Period Day: " + startDate.format(formatter) + "\n" +
+                            "End Period Day: " + endDate.format(formatter) + "\n" +
+                            "-----------------------------------\n" +
                              "Total Hours Worked: " + totalHoursWorked + "\n" +
-                             "Hourly Rate: " + hourlyRate + "\n" +
-                             "Gross Pay: " + earnings + "\n" +
+                             "Hourly Rate: " + compensation.getHourlyRate() + "\n" +
+                             "Gross Pay: " + grossPay + "\n" +
                              "Total Deductions: " + totalDeductions + "\n" +
                              "Net Pay: " + netPay;
 
-            // Custom button options
             Object[] options = {"Download"};
 
             int choice = JOptionPane.showOptionDialog(
@@ -773,7 +819,7 @@ public class HomePageJFrame extends javax.swing.JFrame {
                 options[0]
             );
 
-            if (choice == 0) { // If "Download" button is clicked
+            if (choice == 0) {
                 savePayrollToFile(employee, startDate, endDate, message);
             }
 
