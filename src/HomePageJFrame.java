@@ -10,6 +10,7 @@ import java.text.ParseException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.swing.JOptionPane;
@@ -700,7 +701,24 @@ public class HomePageJFrame extends javax.swing.JFrame {
         try {
             Date start = dateFormat.parse(startDate);
             Date end = dateFormat.parse(endDate);
+            Date today = new Date(); // Get the current date
 
+            // Remove time portion from today for accurate comparison
+            Calendar cal = Calendar.getInstance();
+            cal.setTime(today);
+            cal.set(Calendar.HOUR_OF_DAY, 0);
+            cal.set(Calendar.MINUTE, 0);
+            cal.set(Calendar.SECOND, 0);
+            cal.set(Calendar.MILLISECOND, 0);
+            today = cal.getTime();
+
+            // Check if Start Date is today or before today
+            if (!start.after(today)) {  
+                JOptionPane.showMessageDialog(this, "Start Date must be a future date (after today): " + dateFormat.format(today));
+                return;
+            }
+
+            // Check if End Date is before Start Date
             if (end.before(start)) {
                 JOptionPane.showMessageDialog(this, "End Date cannot be before Start Date.");
                 return;
@@ -730,7 +748,7 @@ public class HomePageJFrame extends javax.swing.JFrame {
 
         } catch (ParseException e) {
             JOptionPane.showMessageDialog(this, "Invalid date format. Please use MM/dd/yyyy");
-        }        
+        }    
     }//GEN-LAST:event_jButton4ActionPerformed
 
     private void jButton5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton5ActionPerformed
