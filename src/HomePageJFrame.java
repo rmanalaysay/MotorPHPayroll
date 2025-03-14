@@ -9,6 +9,7 @@ import java.util.Date;
 import java.text.ParseException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
@@ -745,7 +746,12 @@ public class HomePageJFrame extends javax.swing.JFrame {
             );
 
             writeLeaveToCSV(employee.getEmployeeId(), employee.getLastName(), employee.getFirstName(), leaveType, startDate, endDate);
-
+            
+            // Clear fields after submission
+            jFormattedTextField3.setText("");
+            jFormattedTextField4.setText("");
+            jComboBox1.setSelectedIndex(0);
+            
         } catch (ParseException e) {
             JOptionPane.showMessageDialog(this, "Invalid date format. Please use MM/dd/yyyy");
         }    
@@ -758,9 +764,26 @@ public class HomePageJFrame extends javax.swing.JFrame {
             String startDateStr = jFormattedTextField5.getText();
             String endDateStr = jFormattedTextField6.getText();
 
+            if (startDateStr.isEmpty() || endDateStr.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Please enter valid start and end dates.", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/dd/yyyy"); 
-            LocalDate startDate = LocalDate.parse(startDateStr, formatter);
-            LocalDate endDate = LocalDate.parse(endDateStr, formatter);
+            LocalDate startDate, endDate;
+
+            try {
+                startDate = LocalDate.parse(startDateStr, formatter);
+                endDate = LocalDate.parse(endDateStr, formatter);
+            } catch (DateTimeParseException e) {
+                JOptionPane.showMessageDialog(this, "Invalid date format. Please enter dates in MM/dd/yyyy format.", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            if (endDate.isBefore(startDate)) {
+                JOptionPane.showMessageDialog(this, "End date must be after start date.", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
 
             // Load Employee Data
             List<Employee> employees = EmployeeCSVReader.loadEmployees();
@@ -782,11 +805,17 @@ public class HomePageJFrame extends javax.swing.JFrame {
                                    !att.getDate().isAfter(endDate))
                     .collect(Collectors.toList());
 
-            // Calculate total hours worked and overtime
+            if (filteredAttendance.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "No attendance records found for the selected period.", "Warning", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            // Calculate total hours worked
             double totalHoursWorked = filteredAttendance.stream()
                     .mapToDouble(Attendance::getHoursWorked)
                     .sum();
 
+            // Calculate overtime records
             List<Overtime> overtimeRecords = filteredAttendance.stream()
                     .filter(att -> att.getOvertimeHours() > 0)
                     .map(att -> new Overtime(employeeId, (int) att.getOvertimeHours()))
@@ -840,9 +869,14 @@ public class HomePageJFrame extends javax.swing.JFrame {
             if (choice == 0) {
                 savePayrollToFile(employee, startDate, endDate, message);
             }
+            
+            // Clear fields after submission
+            jFormattedTextField5.setText("");
+            jFormattedTextField6.setText("");
 
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Unexpected error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace(); // Log error for debugging
         }
     }//GEN-LAST:event_jButton5ActionPerformed
 
