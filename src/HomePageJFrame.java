@@ -151,9 +151,9 @@ public class HomePageJFrame extends javax.swing.JFrame {
         jLabel10 = new javax.swing.JLabel();
         jLabel11 = new javax.swing.JLabel();
         jButton4 = new javax.swing.JButton();
+        jComboBox1 = new javax.swing.JComboBox<>();
         jFormattedTextField3 = new javax.swing.JFormattedTextField();
         jFormattedTextField4 = new javax.swing.JFormattedTextField();
-        jComboBox1 = new javax.swing.JComboBox<>();
         jPanel4 = new javax.swing.JPanel();
         jLabel12 = new javax.swing.JLabel();
         jLabel13 = new javax.swing.JLabel();
@@ -367,6 +367,12 @@ public class HomePageJFrame extends javax.swing.JFrame {
         jComboBox1.setFont(new java.awt.Font("Helvetica Neue", 0, 12)); // NOI18N
         jComboBox1.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Vacation ", "Sick", "Maternity/Paternity\t", "Bereavement", "Special Leave" }));
 
+        jFormattedTextField4.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jFormattedTextField4ActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
         jPanel3.setLayout(jPanel3Layout);
         jPanel3Layout.setHorizontalGroup(
@@ -423,10 +429,10 @@ public class HomePageJFrame extends javax.swing.JFrame {
                     .addComponent(jLabel9))
                 .addGap(23, 23, 23)
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jFormattedTextField3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel10)
                     .addComponent(jTextField6, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel7))
+                    .addComponent(jLabel7)
+                    .addComponent(jFormattedTextField3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(18, 18, 18)
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel8)
@@ -437,13 +443,6 @@ public class HomePageJFrame extends javax.swing.JFrame {
                 .addComponent(jButton4)
                 .addGap(35, 35, 35))
         );
-
-        jFormattedTextField3.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(
-            new javax.swing.text.DateFormatter(new java.text.SimpleDateFormat("MM/dd/yyyy"))
-        ));
-        jFormattedTextField4.setFormatterFactory(new javax.swing.text.DefaultFormatterFactory(
-            new javax.swing.text.DateFormatter(new java.text.SimpleDateFormat("MM/dd/yyyy"))
-        ));
 
         jTabbedPane1.addTab("Leave Request", jPanel3);
 
@@ -643,9 +642,6 @@ public class HomePageJFrame extends javax.swing.JFrame {
 
         // Update attendance record for login
         AttendanceCSVReader.updateAttendance(empId, lastName, firstName, true);
-
-        // Show a dialog box with the time in message
-        JOptionPane.showMessageDialog(this, "Time In at " + timeIn, "Log In", JOptionPane.INFORMATION_MESSAGE);  
     }//GEN-LAST:event_jButton2ActionPerformed
 
     private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
@@ -691,35 +687,25 @@ public class HomePageJFrame extends javax.swing.JFrame {
 
     private void jButton4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton4ActionPerformed
         // TODO add your handling code here:
-        String startDate = jFormattedTextField3.getText();
-        String endDate = jFormattedTextField4.getText();
+        String startDateStr = jFormattedTextField3.getText();
+        String endDateStr = jFormattedTextField4.getText();
         String leaveType = jComboBox1.getSelectedItem().toString();
 
-        SimpleDateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy");
-        dateFormat.setLenient(false);
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/dd/yyyy");
 
         try {
-            Date start = dateFormat.parse(startDate);
-            Date end = dateFormat.parse(endDate);
-            Date today = new Date(); // Get the current date
-
-            // Remove time portion from today for accurate comparison
-            Calendar cal = Calendar.getInstance();
-            cal.setTime(today);
-            cal.set(Calendar.HOUR_OF_DAY, 0);
-            cal.set(Calendar.MINUTE, 0);
-            cal.set(Calendar.SECOND, 0);
-            cal.set(Calendar.MILLISECOND, 0);
-            today = cal.getTime();
+            LocalDate startDate = LocalDate.parse(startDateStr, formatter);
+            LocalDate endDate = LocalDate.parse(endDateStr, formatter);
+            LocalDate today = LocalDate.now();
 
             // Check if Start Date is today or before today
-            if (!start.after(today)) {  
-                JOptionPane.showMessageDialog(this, "Start Date must be a future date (after today): " + dateFormat.format(today));
+            if (!startDate.isAfter(today)) {  
+                JOptionPane.showMessageDialog(this, "Start Date must be a future date (after today): " + today.format(formatter));
                 return;
             }
 
             // Check if End Date is before Start Date
-            if (end.before(start)) {
+            if (endDate.isBefore(startDate)) {
                 JOptionPane.showMessageDialog(this, "End Date cannot be before Start Date.");
                 return;
             }
@@ -739,21 +725,21 @@ public class HomePageJFrame extends javax.swing.JFrame {
                     "Leave Request Submitted and Saved:\n" +
                             "Employee ID: " + employee.getEmployeeId() + "\n" +
                             "Name: " + employee.getFirstName() + " " + employee.getLastName() + "\n" +
-                            "Start Date: " + startDate + "\n" +
-                            "End Date: " + endDate + "\n" +
+                            "Start Date: " + startDate.format(formatter) + "\n" +
+                            "End Date: " + endDate.format(formatter) + "\n" +
                             "Leave Type: " + leaveType
             );
 
-            writeLeaveToCSV(employee.getEmployeeId(), employee.getLastName(), employee.getFirstName(), leaveType, startDate, endDate);
-            
+            writeLeaveToCSV(employee.getEmployeeId(), employee.getLastName(), employee.getFirstName(), leaveType, startDate.format(formatter), endDate.format(formatter));
+
             // Clear fields after submission
             jFormattedTextField3.setText("");
             jFormattedTextField4.setText("");
             jComboBox1.setSelectedIndex(0);
-            
-        } catch (ParseException e) {
-            JOptionPane.showMessageDialog(this, "Invalid date format. Please use MM/dd/yyyy");
-        }    
+
+        } catch (DateTimeParseException e) {
+            JOptionPane.showMessageDialog(this, "Invalid date format. Please use MM/dd/yyyy", "Error", JOptionPane.ERROR_MESSAGE);
+        }
     }//GEN-LAST:event_jButton4ActionPerformed
 
     private void jButton5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton5ActionPerformed
@@ -878,6 +864,10 @@ public class HomePageJFrame extends javax.swing.JFrame {
             e.printStackTrace(); // Log error for debugging
         }
     }//GEN-LAST:event_jButton5ActionPerformed
+
+    private void jFormattedTextField4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jFormattedTextField4ActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_jFormattedTextField4ActionPerformed
 
     /**
      * @param args the command line arguments
