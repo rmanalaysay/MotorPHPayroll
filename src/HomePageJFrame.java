@@ -1,3 +1,4 @@
+
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.time.LocalDate;
@@ -8,21 +9,10 @@ import java.util.stream.Collectors;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
- */
-/**
- *
- * @author rejoice
- */
 public class HomePageJFrame extends javax.swing.JFrame {
     
     private int employeeId; // Declare as an instance variable
-    
-    /**
-     * Creates new form HomePageJFrame
-     */
+   
     public HomePageJFrame(int employeeId) {
         this.employeeId = employeeId;
         initComponents();
@@ -55,18 +45,6 @@ public class HomePageJFrame extends javax.swing.JFrame {
         SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy");
         Date now = new Date();
         jFormattedTextField7.setText(sdf.format(now)); // Corrected field
-    }
-
-    private void setTimeIn() {
-        SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm"); // 24-hour format
-        Date now = new Date();
-        jFormattedTextField1.setText(timeFormat.format(now)); // Set time in
-    }
-
-    private void setTimeOut() {
-        SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm"); // 24-hour format
-        Date now = new Date();
-        jFormattedTextField2.setText(timeFormat.format(now)); // Set time out
     }
                                                
     /**
@@ -585,56 +563,40 @@ public class HomePageJFrame extends javax.swing.JFrame {
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
         // TODO add your handling code here for Log In button:
         // Log In Button
-        SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm"); // 24-hour format
-        Date now = new Date();
-        String timeIn = timeFormat.format(now);
-
-        jFormattedTextField1.setText(timeIn); // Set the time in field
-
-        // Show a dialog box with the time in message
-        JOptionPane.showMessageDialog(this, "Time In at " + timeIn, "Log In", JOptionPane.INFORMATION_MESSAGE);
-
-        // Fetch employee details from text fields
         int empId = Integer.parseInt(jTextField3.getText());
         String lastName = jTextField1.getText();
         String firstName = jTextField2.getText();
 
-        // Update attendance record for login
-        AttendanceCSVReader.updateAttendance(empId, lastName, firstName, true);
+        Attendance attendance = new Attendance(empId, lastName, firstName, LocalDate.now(), "", "");
+        attendance.logTimeIn(); //Use Attendance class method
+        AttendanceCSVReader.updateAttendance(attendance); //Pass the object
 
-        // Disable the Log In button to prevent multiple clicks
-        jButton2.setEnabled(false);
+        jFormattedTextField1.setText(attendance.getLogin()); // Set time in
+
+        JOptionPane.showMessageDialog(this, "Time In at " + attendance.getLogin(), "Log In", JOptionPane.INFORMATION_MESSAGE);
+        jButton2.setEnabled(false); // Disable button after logging in
     }//GEN-LAST:event_jButton2ActionPerformed
 
     private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
         // TODO add your handling code here for Log Out button:
         // Log Out Button
-        SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm");
-        Date now = new Date();
-        String timeOut = timeFormat.format(now);
+        int empId = Integer.parseInt(jTextField3.getText());
+        String lastName = jTextField1.getText();
+        String firstName = jTextField2.getText();
 
         String timeIn = jFormattedTextField1.getText();
-        if (timeIn.isEmpty()) { // Prevent errors if time in is missing
+        if (timeIn.isEmpty()) { 
             JOptionPane.showMessageDialog(this, "Please log in first!", "Error", JOptionPane.WARNING_MESSAGE);
-            jFormattedTextField2.setText(""); // Clear time-out field
             return;
         }
 
-        try {
-            int empId = Integer.parseInt(jTextField3.getText());
-            String lastName = jTextField1.getText();
-            String firstName = jTextField2.getText();
+        Attendance attendance = new Attendance(empId, lastName, firstName, LocalDate.now(), timeIn, "");
+        attendance.logTimeOut(); // Use Attendance class method
+        AttendanceCSVReader.updateAttendance(attendance); //Pass the object
 
-            jFormattedTextField2.setText(timeOut); // Set the time out field
-            AttendanceCSVReader.updateAttendance(empId, lastName, firstName, false);
-
-            JOptionPane.showMessageDialog(this, "Time Out at " + timeOut, "Log Out", JOptionPane.INFORMATION_MESSAGE);
-
-            // Disable the Log Out button to prevent multiple clicks
-            jButton3.setEnabled(false);
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Error logging out!", "Error", JOptionPane.ERROR_MESSAGE);
-        }
+        jFormattedTextField2.setText(attendance.getLogout()); // Set time out
+        JOptionPane.showMessageDialog(this, "Time Out at " + attendance.getLogout(), "Log Out", JOptionPane.INFORMATION_MESSAGE);
+        jButton3.setEnabled(false); // Disable button after logging out
     }//GEN-LAST:event_jButton3ActionPerformed
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed

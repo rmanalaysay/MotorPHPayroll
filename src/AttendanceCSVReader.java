@@ -1,6 +1,5 @@
 import java.io.*;
 import java.time.LocalDate;
-import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
@@ -36,48 +35,31 @@ public class AttendanceCSVReader {
     }
     
 
-    public static void updateAttendance(int employeeId, String lastName, String firstName, boolean isLogin) {
-        LocalDate today = LocalDate.now();
-        String currentTime = LocalTime.now().format(TIME_FORMAT);
+    // Updated to accept an Attendance object
+    public static void updateAttendance(Attendance attendance) {
         List<String> lines = new ArrayList<>();
         boolean entryUpdated = false;
-
         File file = new File(FILE_PATH);
-        if (!file.exists()) {
-            System.err.println("Error: Attendance file not found at " + file.getAbsolutePath());
-            return;
-        }
 
-        try (BufferedReader br = new BufferedReader(new FileReader(FILE_PATH))) {
+        try (BufferedReader br = new BufferedReader(new FileReader(file))) {
             String line;
             while ((line = br.readLine()) != null) {
                 String[] values = line.split(",");
 
-                if (values.length >= 4 && values[0].equals(String.valueOf(employeeId)) &&
-                    values[3].equals(today.format(DATE_FORMAT))) {
+                if (values.length >= 4 && values[0].equals(String.valueOf(attendance.getEmployeeId())) &&
+                        values[3].equals(attendance.getDate().format(DATE_FORMAT))) {
 
-                    while (values.length < 6) {
-                        values = Arrays.copyOf(values, 6);
-                    }
-
-                    if (isLogin) {
-                        values[4] = currentTime;
-                    } else {
-                        values[5] = currentTime;
-                    }
-
+                    line = attendance.formatForCSV(); //Use the new method
                     entryUpdated = true;
-                    line = String.join(",", values);
                 }
                 lines.add(line);
             }
         } catch (IOException e) {
-            System.err.println("Error reading the attendance file: " + e.getMessage());
+            System.err.println("Error reading attendance file: " + e.getMessage());
         }
 
-        if (!entryUpdated && isLogin) {
-            lines.add(employeeId + "," + lastName + "," + firstName + "," + 
-                      today.format(DATE_FORMAT) + "," + currentTime + ",");
+        if (!entryUpdated) {
+            lines.add(attendance.formatForCSV());
         }
 
         try (BufferedWriter bw = new BufferedWriter(new FileWriter(FILE_PATH, false))) {
@@ -85,7 +67,6 @@ public class AttendanceCSVReader {
                 bw.write(updatedLine);
                 bw.newLine();
             }
-            System.out.println(isLogin ? "Log-in recorded successfully." : "Log-out recorded successfully.");
         } catch (IOException e) {
             System.err.println("Error writing to attendance file: " + e.getMessage());
         }
