@@ -1,99 +1,108 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
-import java.time.Duration;
+import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.time.LocalTime;
-import java.util.ArrayList;
 import java.util.List;
-/**
- *
- * @author rejoice
- */
-class Payroll implements PayrollCalculator { 
-    private final int employeeId;
-    private final double basicSalary;
-    private final CompensationDetails compensationDetails;
-    private final double benefits;
-    private final List<Overtime> overtime;
+
+public class Payroll implements PayrollCalculator {
+    private final Employee employee;
+    private final List<Attendance> attendanceRecords;
+    private final CompensationDetails compensation;
+    private final GovernmentContributions contributions;
+
     private int minutesLate;
     private int minutesUndertime;
-    private final int daysUnpaidLeave;
-    private final GovernmentContributions contributions;
-    private final List<Attendance> attendanceRecords; // Store attendance records
+    private int daysUnpaidLeave;
 
-    private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("HH:mm");
-
-    public Payroll(int employeeId, CompensationDetails compensationDetails, double benefits, 
-               List<Attendance> attendanceRecords, GovernmentContributions contributions) {
-        this.employeeId = employeeId;
-        this.compensationDetails = compensationDetails;
-        this.basicSalary = compensationDetails.getBasicSalary();
-        this.benefits = benefits;
-        this.overtime = new ArrayList<>();
+    public Payroll(Employee employee, List<Attendance> attendanceRecords) {
+        this.employee = employee;
+        this.attendanceRecords = attendanceRecords;
+        this.compensation = employee.getCompensationDetails();
+        this.contributions = employee.getGovernmentContributions();
         this.minutesLate = 0;
         this.minutesUndertime = 0;
         this.daysUnpaidLeave = 0;
-        this.contributions = contributions;
-        this.attendanceRecords = attendanceRecords; // Store attendanceRecords
 
         for (Attendance record : attendanceRecords) {
             this.minutesLate += record.getMinutesLate();
             this.minutesUndertime += record.getMinutesUndertime();
 
-            if (record.getOvertimeHours() > 0) {
-                overtime.add(new Overtime(employeeId, (int) record.getOvertimeHours()));
+            if (record.isUnpaidLeave()) {  
+                this.daysUnpaidLeave++;
             }
         }
     }
-    
-    public double getTotalHoursWorked() {
-        double totalHoursWorked = 0;
-
-        for (Attendance record : attendanceRecords) { // No need to pass it as a parameter
-            totalHoursWorked += record.getHoursWorked();
-        }
-
-        return totalHoursWorked;
-    }
-
-    public static double calculateHoursWorked(String login, String logout) {
-        LocalTime loginTime = LocalTime.parse(login, TIME_FORMAT);
-        LocalTime logoutTime = LocalTime.parse(logout, TIME_FORMAT);
-        return Duration.between(loginTime, logoutTime).toMinutes() / 60.0;
-    }
 
     @Override
-    public double calculateEarnings(double totalHoursWorked, double hourlyRate) {
-        // Regular earnings + Overtime pay
-        return (totalHoursWorked * hourlyRate);
+    public double calculateEarnings() {
+        double totalHoursWorked = attendanceRecords.stream()
+            .mapToDouble(Attendance::getHoursWorked)
+            .sum();
+
+        double regularPay = totalHoursWorked * compensation.getHourlyRate();
+        double overtimePay = Overtime.calculateOvertimePay(totalHoursWorked, compensation.getHourlyRate());
+
+        return regularPay + overtimePay;
     }
 
     @Override
     public double calculateBenefits() {
-        return benefits;
+        return compensation.getTotalBenefits();
+    }
+    
+    @Override
+    public double calculateGrossPay() {
+        return calculateEarnings() + compensation.getTotalBenefits();
     }
 
     @Override
     public double calculateTotalDeduction() {
-        double lateDeduction = new LateDeduction(employeeId, minutesLate).calculateDeduction();
-        double undertimeDeduction = new UndertimeDeduction(employeeId, minutesUndertime).calculateDeduction();
-        double unpaidLeaveDeduction = new UnpaidLeaveDeduction(employeeId, daysUnpaidLeave).calculateDeduction();
-        double governmentContributions = contributions.calculateTotalGovernmentContributions(basicSalary);
-        
-        return lateDeduction + undertimeDeduction + unpaidLeaveDeduction + governmentContributions;
+        double lateDeduction = new LateDeduction(employee.getEmployeeId(), minutesLate).calculateDeduction();
+        double undertimeDeduction = new UndertimeDeduction(employee.getEmployeeId(), minutesUndertime).calculateDeduction();
+        double unpaidLeaveDeduction = new UnpaidLeaveDeduction(employee.getEmployeeId(), daysUnpaidLeave).calculateDeduction();
+        double governmentDeductions = contributions.calculateTotalGovernmentContributions(compensation.getBasicSalary());
+
+        return lateDeduction + undertimeDeduction + unpaidLeaveDeduction + governmentDeductions;
     }
 
     @Override
     public double calculateNetPay() {  
-        double totalHoursWorked = getTotalHoursWorked(); // Get correct worked hours
-        double hourlyRate = compensationDetails.getHourlyRate();
-        double earnings = calculateEarnings(totalHoursWorked, hourlyRate);
-        double grossPay = earnings + benefits; // Corrected formula
-        double totalDeductions = calculateTotalDeduction();
+        return Math.round((calculateGrossPay() - calculateTotalDeduction()) * 100.0) / 100.0;
+    }
 
-        double netPay = grossPay - totalDeductions;
-        return Math.round(netPay * 100.0) / 100.0; // Round to 2 decimal places
+    public String generatePayrollSummary(LocalDate startDate, LocalDate endDate) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/dd/yyyy");
+
+        double totalHoursWorked = attendanceRecords.stream().mapToDouble(Attendance::getHoursWorked).sum();
+        double regularPay = totalHoursWorked * compensation.getHourlyRate();
+        double overtimePay = Overtime.calculateOvertimePay(totalHoursWorked, compensation.getHourlyRate());
+
+        return String.format(
+            "=== Payroll Computation ===\n" +
+            "Employee ID: %d\n" +
+            "Full Name: %s %s\n" +
+            "Position: %s\n" +
+            "Start Period: %s\n" +
+            "End Period: %s\n" +
+            "-----------------------------------\n" +
+            "Total Hours Worked: %.2f\n" +
+            "Hourly Rate: %.2f\n" +
+            "Regular Pay: %.2f\n" +     
+            "Overtime Pay: %.2f\n" +
+            "Allowances: %.2f\n" +   
+            "Gross Pay: %.2f\n" +
+            "Total Deductions: %.2f\n" +
+            "Net Pay: %.2f\n",
+            employee.getEmployeeId(),
+            employee.getFirstName(), employee.getLastName(),
+            employee.getPosition(),
+            startDate.format(formatter), endDate.format(formatter),
+            totalHoursWorked,
+            compensation.getHourlyRate(),
+            regularPay,
+            overtimePay,
+            calculateBenefits(),
+            calculateGrossPay(),
+            calculateTotalDeduction(),
+            calculateNetPay()
+        );
     }
 }

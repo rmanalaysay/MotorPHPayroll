@@ -1,16 +1,8 @@
-
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.text.ParseException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
-import java.util.Calendar;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.swing.JOptionPane;
@@ -39,24 +31,23 @@ public class HomePageJFrame extends javax.swing.JFrame {
     }
 
     private void autoFillEmployeeDetails() {
-        List<Employee> employees = EmployeeCSVReader.loadEmployees(); // Load employee data
+        Employee emp = EmployeeCSVReader.getEmployeeById(this.employeeId);
 
-        for (Employee emp : employees) {
-            if (emp.getEmployeeId() == this.employeeId) { // Match ID
-                SwingUtilities.invokeLater(() -> { // Ensures UI updates safely
-                    jTextField3.setText(String.valueOf(emp.getEmployeeId())); // Employee ID for Attendance tab
-                    jTextField1.setText(emp.getLastName());  // Last Name for Attendance tab
-                    jTextField2.setText(emp.getFirstName()); // First Name for Attendance tab
-                    jTextField5.setText(String.valueOf(emp.getEmployeeId())); // Employee ID for Leave Request tab
-                    jTextField6.setText(emp.getLastName());  // Last Name for for Leave Request tab
-                    jTextField7.setText(emp.getFirstName()); // First Name for Leave Request tab
-                    jTextField8.setText(String.valueOf(emp.getEmployeeId())); // Employee ID for Payslip tab
-                    jTextField9.setText(emp.getPosition()); // Position for Payslip tab
-                    jTextField10.setText(emp.getLastName());  // Last Name for for Payslip tab
-                    jTextField11.setText(emp.getFirstName()); // First Name for Payslip tab
-                });
-                break; // Stop searching once found
-            }
+        if (emp != null) {
+            SwingUtilities.invokeLater(() -> {
+                jTextField3.setText(String.valueOf(emp.getEmployeeId())); // Employee ID for Attendance tab
+                jTextField1.setText(emp.getLastName());  // Last Name for Attendance tab
+                jTextField2.setText(emp.getFirstName()); // First Name for Attendance tab
+                jTextField5.setText(String.valueOf(emp.getEmployeeId())); // Employee ID for Leave Request tab
+                jTextField6.setText(emp.getLastName());  // Last Name for Leave Request tab
+                jTextField7.setText(emp.getFirstName()); // First Name for Leave Request tab
+                jTextField8.setText(String.valueOf(emp.getEmployeeId())); // Employee ID for Payslip tab
+                jTextField9.setText(emp.getPosition()); // Position for Payslip tab
+                jTextField10.setText(emp.getLastName());  // Last Name for Payslip tab
+                jTextField11.setText(emp.getFirstName()); // First Name for Payslip tab
+            });
+        } else {
+            JOptionPane.showMessageDialog(this, "Employee not found!", "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -76,39 +67,6 @@ public class HomePageJFrame extends javax.swing.JFrame {
         SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm"); // 24-hour format
         Date now = new Date();
         jFormattedTextField2.setText(timeFormat.format(now)); // Set time out
-    }
-    
-    private void writeLeaveToCSV(int employeeId, String lastName, String firstName, String leaveType, String startDate, String endDate) {
-        String filePath = Paths.get("src/CSVFiles/leaverequest.csv").toAbsolutePath().toString();
-        File file = new File(filePath);
-
-        String newEntry = employeeId + "," + lastName + "," + firstName + "," + leaveType + "," + startDate + "," + endDate;
-
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(file, true))) {
-            // Move to a new line before writing new data
-            writer.newLine(); 
-            writer.write(newEntry);
-            writer.flush();   // Ensure data is written
-
-            System.out.println("Leave request added: " + newEntry);
-        } catch (IOException e) {
-            JOptionPane.showMessageDialog(null, "Error writing to file: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-            e.printStackTrace();
-        }
-    }
-    
-    // Function to save the payroll breakdown to a file
-    private void savePayrollToFile(Employee employee, LocalDate startDate, LocalDate endDate, String payrollDetails) {
-        try {
-            String filename = "Payslip_" + employee.getEmployeeId() + "_" + startDate + "_to_" + endDate + ".txt";
-            File file = new File("src/" + filename);
-            FileWriter writer = new FileWriter(file);
-            writer.write(payrollDetails);
-            writer.close();
-            JOptionPane.showMessageDialog(this, "Payslip saved successfully: ", "Download Complete", JOptionPane.INFORMATION_MESSAGE);
-        } catch (IOException e) {
-            JOptionPane.showMessageDialog(this, "Error saving file: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-        }
     }
                                                
     /**
@@ -365,7 +323,7 @@ public class HomePageJFrame extends javax.swing.JFrame {
         });
 
         jComboBox1.setFont(new java.awt.Font("Helvetica Neue", 0, 12)); // NOI18N
-        jComboBox1.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Vacation ", "Sick", "Maternity/Paternity\t", "Bereavement", "Special Leave" }));
+        jComboBox1.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Vacation", "Sick", "Maternity/Paternity", "Bereavement", "Special Leave" }));
 
         jFormattedTextField4.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -626,6 +584,7 @@ public class HomePageJFrame extends javax.swing.JFrame {
 
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
         // TODO add your handling code here for Log In button:
+        // Log In Button
         SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm"); // 24-hour format
         Date now = new Date();
         String timeIn = timeFormat.format(now);
@@ -642,19 +601,22 @@ public class HomePageJFrame extends javax.swing.JFrame {
 
         // Update attendance record for login
         AttendanceCSVReader.updateAttendance(empId, lastName, firstName, true);
+
+        // Disable the Log In button to prevent multiple clicks
+        jButton2.setEnabled(false);
     }//GEN-LAST:event_jButton2ActionPerformed
 
     private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
         // TODO add your handling code here for Log Out button:
+        // Log Out Button
         SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm");
         Date now = new Date();
         String timeOut = timeFormat.format(now);
 
-        jFormattedTextField2.setText(timeOut);
-
         String timeIn = jFormattedTextField1.getText();
         if (timeIn.isEmpty()) { // Prevent errors if time in is missing
-            JOptionPane.showMessageDialog(this, "Please log in first!", "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Please log in first!", "Error", JOptionPane.WARNING_MESSAGE);
+            jFormattedTextField2.setText(""); // Clear time-out field
             return;
         }
 
@@ -663,9 +625,13 @@ public class HomePageJFrame extends javax.swing.JFrame {
             String lastName = jTextField1.getText();
             String firstName = jTextField2.getText();
 
+            jFormattedTextField2.setText(timeOut); // Set the time out field
             AttendanceCSVReader.updateAttendance(empId, lastName, firstName, false);
 
             JOptionPane.showMessageDialog(this, "Time Out at " + timeOut, "Log Out", JOptionPane.INFORMATION_MESSAGE);
+
+            // Disable the Log Out button to prevent multiple clicks
+            jButton3.setEnabled(false);
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this, "Error logging out!", "Error", JOptionPane.ERROR_MESSAGE);
         }
@@ -690,7 +656,6 @@ public class HomePageJFrame extends javax.swing.JFrame {
         String startDateStr = jFormattedTextField3.getText();
         String endDateStr = jFormattedTextField4.getText();
         String leaveType = jComboBox1.getSelectedItem().toString();
-
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/dd/yyyy");
 
         try {
@@ -698,54 +663,58 @@ public class HomePageJFrame extends javax.swing.JFrame {
             LocalDate endDate = LocalDate.parse(endDateStr, formatter);
             LocalDate today = LocalDate.now();
 
-            // Check if Start Date is today or before today
-            if (!startDate.isAfter(today)) {  
-                JOptionPane.showMessageDialog(this, "Start Date must be a future date (after today): " + today.format(formatter));
-                return;
-            }
-
-            // Check if End Date is before Start Date
-            if (endDate.isBefore(startDate)) {
-                JOptionPane.showMessageDialog(this, "End Date cannot be before Start Date.");
-                return;
-            }
-
-            List<Employee> employees = EmployeeCSVReader.loadEmployees();
-            Employee employee = employees.stream()
-                    .filter(emp -> emp.getEmployeeId() == employeeId)
-                    .findFirst()
-                    .orElse(null);
-
+            Employee employee = EmployeeCSVReader.getEmployeeById(employeeId);
             if (employee == null) {
                 JOptionPane.showMessageDialog(this, "Employee not found!", "Error", JOptionPane.ERROR_MESSAGE);
                 return;
             }
 
-            JOptionPane.showMessageDialog(this,
-                    "Leave Request Submitted and Saved:\n" +
-                            "Employee ID: " + employee.getEmployeeId() + "\n" +
-                            "Name: " + employee.getFirstName() + " " + employee.getLastName() + "\n" +
-                            "Start Date: " + startDate.format(formatter) + "\n" +
-                            "End Date: " + endDate.format(formatter) + "\n" +
-                            "Leave Type: " + leaveType
-            );
+            // Check if Start Date is today or before today
+            if (!startDate.isAfter(today)) {  
+                JOptionPane.showMessageDialog(this, 
+                    "Start Date must be a future date (after today): " + today.format(formatter), 
+                    "Invalid Start Date", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
 
-            writeLeaveToCSV(employee.getEmployeeId(), employee.getLastName(), employee.getFirstName(), leaveType, startDate.format(formatter), endDate.format(formatter));
+            // Check if End Date is before Start Date
+            if (endDate.isBefore(startDate)) {
+                JOptionPane.showMessageDialog(this, 
+                    "End Date cannot be before Start Date.", 
+                    "Invalid End Date", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
 
-            // Clear fields after submission
+            // If all validations pass, create the leave request
+            LeaveRequest leaveRequest = new LeaveRequest(employee, leaveType, startDate, endDate);
+
+            JOptionPane.showMessageDialog(this, 
+                "Leave Request Submitted:\n" +
+                "Employee: " + employee.getFirstName() + " " + employee.getLastName() + "\n" +
+                "Start Date: " + startDate.format(formatter) + "\n" +
+                "End Date: " + endDate.format(formatter) + "\n" +
+                "Leave Type: " + leaveType,
+                "Leave Request Successful", JOptionPane.INFORMATION_MESSAGE);
+
+            // Write leave request to CSV
+            LeavesCSVReader.writeLeaveToCSV(leaveRequest);
+
+            // Clear fields
             jFormattedTextField3.setText("");
             jFormattedTextField4.setText("");
             jComboBox1.setSelectedIndex(0);
 
         } catch (DateTimeParseException e) {
-            JOptionPane.showMessageDialog(this, "Invalid date format. Please use MM/dd/yyyy", "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, 
+                "Invalid date format. Please use MM/dd/yyyy", 
+                "Date Format Error", JOptionPane.ERROR_MESSAGE);
         }
     }//GEN-LAST:event_jButton4ActionPerformed
 
     private void jButton5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton5ActionPerformed
         // TODO add your handling code here:
         try {
-            // Get Date Range 
+            // Get Date Range
             String startDateStr = jFormattedTextField5.getText();
             String endDateStr = jFormattedTextField6.getText();
 
@@ -771,78 +740,35 @@ public class HomePageJFrame extends javax.swing.JFrame {
             }
 
             // Load Employee Data
-            List<Employee> employees = EmployeeCSVReader.loadEmployees();
-            Employee employee = employees.stream()
-                    .filter(emp -> emp.getEmployeeId() == employeeId)
-                    .findFirst()
-                    .orElse(null);
-
+            Employee employee = EmployeeCSVReader.getEmployeeById(employeeId);
             if (employee == null) {
                 JOptionPane.showMessageDialog(this, "Employee not found!", "Error", JOptionPane.ERROR_MESSAGE);
                 return;
             }
 
-            // Load Attendance Records
-            List<Attendance> attendanceRecords = AttendanceCSVReader.readAttendance();
-            List<Attendance> filteredAttendance = attendanceRecords.stream()
-                    .filter(att -> att.getEmployeeId() == employeeId &&
-                                   !att.getDate().isBefore(startDate) &&
-                                   !att.getDate().isAfter(endDate))
-                    .collect(Collectors.toList());
+            // Read attendance records and filter by employee ID and date range
+            List<Attendance> allRecords = AttendanceCSVReader.readAttendance();
+            List<Attendance> attendanceRecords = allRecords.stream()
+                .filter(record -> record.getEmployeeId() == employeeId &&
+                                  !record.getDate().isBefore(startDate) &&
+                                  !record.getDate().isAfter(endDate))
+                .collect(Collectors.toList());
 
-            if (filteredAttendance.isEmpty()) {
+            if (attendanceRecords.isEmpty()) {
                 JOptionPane.showMessageDialog(this, "No attendance records found for the selected period.", "Warning", JOptionPane.WARNING_MESSAGE);
                 return;
             }
 
-            // Calculate total hours worked
-            double totalHoursWorked = filteredAttendance.stream()
-                    .mapToDouble(Attendance::getHoursWorked)
-                    .sum();
-
-            // Calculate overtime records
-            List<Overtime> overtimeRecords = filteredAttendance.stream()
-                    .filter(att -> att.getOvertimeHours() > 0)
-                    .map(att -> new Overtime(employeeId, (int) att.getOvertimeHours()))
-                    .collect(Collectors.toList());
-
-            CompensationDetails compensation = employee.getCompensationDetails();
-            GovernmentContributions contributions = employee.getGovernmentContributions();
-
-            // Instantiate Payroll Object
-            Payroll payroll = new Payroll(
-                    employeeId,
-                    compensation,
-                    compensation.getTotalBenefits(),
-                    filteredAttendance,
-                    contributions
-            );
-
-            // Compute Payroll Details
-            double grossPay = payroll.calculateEarnings(totalHoursWorked, compensation.getHourlyRate()) 
-                            + payroll.calculateBenefits();
-            double totalDeductions = payroll.calculateTotalDeduction();
-            double netPay = payroll.calculateNetPay();
+            // Generate Payslip
+            PayslipGenerator payslipGenerator = new PayslipGenerator(employee, attendanceRecords);
+            String payslipDetails = payslipGenerator.generatePayslip(startDate, endDate);
 
             // Display Payroll Breakdown
-            String message = "=== Payroll Computation ===\n" +
-                            "Employee ID: " + employee.getEmployeeId() + "\n" +
-                            "Full Name: " + employee.getFirstName() + " " + employee.getLastName() + "\n" +
-                            "Position: " + employee.getPosition() + "\n" +
-                            "Start Period Day: " + startDate.format(formatter) + "\n" +
-                            "End Period Day: " + endDate.format(formatter) + "\n" +
-                            "-----------------------------------\n" +
-                             "Total Hours Worked: " + totalHoursWorked + "\n" +
-                             "Hourly Rate: " + compensation.getHourlyRate() + "\n" +
-                             "Gross Pay: " + grossPay + "\n" +
-                             "Total Deductions: " + totalDeductions + "\n" +
-                             "Net Pay: " + netPay;
-
             Object[] options = {"Download"};
 
             int choice = JOptionPane.showOptionDialog(
                 this, 
-                message, 
+                payslipDetails, 
                 "Payslip Breakdown", 
                 JOptionPane.DEFAULT_OPTION, 
                 JOptionPane.INFORMATION_MESSAGE, 
@@ -852,16 +778,16 @@ public class HomePageJFrame extends javax.swing.JFrame {
             );
 
             if (choice == 0) {
-                savePayrollToFile(employee, startDate, endDate, message);
+                payslipGenerator.savePayslipToFile(employee, startDate, endDate, payslipDetails);
             }
-            
+
             // Clear fields after submission
             jFormattedTextField5.setText("");
             jFormattedTextField6.setText("");
 
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this, "Unexpected error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-            e.printStackTrace(); // Log error for debugging
+            e.printStackTrace();
         }
     }//GEN-LAST:event_jButton5ActionPerformed
 

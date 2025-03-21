@@ -1,14 +1,6 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 
-/**
- *
- * @author rejoice
- */
 class LeaveRequest {
     private final Employee employee;
     private final LocalDate startDate;
@@ -22,14 +14,31 @@ class LeaveRequest {
         this.endDate = endDate;
     }
 
+    public Employee getEmployee() {
+        return employee;
+    }
+
+    public LocalDate getStartDate() {
+        return startDate;
+    }
+
+    public LocalDate getEndDate() {
+        return endDate;
+    }
+
+    public String getLeaveType() {
+        return leaveType;
+    }
+    
+    public boolean isValid() {
+        LocalDate today = LocalDate.now();
+        return startDate.isAfter(today) && !endDate.isBefore(startDate);
+    }
+
     public void approveLeave() {
         if ("Unpaid".equalsIgnoreCase(leaveType)) {
             int days = (int) ChronoUnit.DAYS.between(startDate, endDate) + 1;
             new UnpaidLeaveDeduction(employee.getEmployeeId(), days);
         }
-    }
-
-    public boolean overlapsWith(LeaveRequest other) {
-        return !startDate.isAfter(other.endDate) && !endDate.isBefore(other.startDate);
     }
 }

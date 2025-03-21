@@ -1,11 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
-/**
- *
- * @author rejoice
- */
 // Compensation Details Class
 class CompensationDetails {
     private final double basicSalary;
@@ -22,7 +14,24 @@ class CompensationDetails {
         this.hourlyRate = hourlyRate;
     }
 
-    public double getBasicSalary() { return basicSalary; }
-    public double getHourlyRate() { return hourlyRate; }
-    public double getTotalBenefits() { return riceSubsidy + phoneAllowance + clothingAllowance; }
+    public double getRiceSubsidy() {
+        return riceSubsidy;
+    }
+
+    public double getPhoneAllowance() {
+        return phoneAllowance;
+    }
+
+    public double getClothingAllowance() {
+        return clothingAllowance;
+    }
+    
+    public double getBasicSalary() { 
+        return basicSalary; }
+    
+    public double getHourlyRate() { 
+        return hourlyRate; }
+    
+    public double getTotalBenefits() { 
+        return riceSubsidy + phoneAllowance + clothingAllowance; }
 }

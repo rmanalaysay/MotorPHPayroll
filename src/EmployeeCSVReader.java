@@ -1,33 +1,32 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 import java.io.*;
 import java.util.*;
-/**
- *
- * @author rejoice
- */
-// EmployeeCSVReader class
+
 class EmployeeCSVReader {
     private static final String EMPLOYEE_CSV_FILE = "src/CSVFiles/employees.csv";
+    private static List<Employee> employees;
+
+    // Load employees only when needed
+    private static void ensureEmployeesLoaded() {
+        if (employees == null || employees.isEmpty()) {
+            employees = loadEmployees();
+        }
+    }
 
     public static List<Employee> loadEmployees() {
-        List<Employee> employees = new ArrayList<>();
+        List<Employee> employeeList = new ArrayList<>();
         try (BufferedReader br = new BufferedReader(new FileReader(EMPLOYEE_CSV_FILE))) {
             System.out.println("Loading employees from: " + new File(EMPLOYEE_CSV_FILE).getAbsolutePath());
             br.readLine(); // Skip header
 
             String line;
             while ((line = br.readLine()) != null) {
-                // Use regex-based splitting to handle fields with commas inside quotes
                 String[] data = parseCSVLine(line);
-                
-                if (data.length < 18) {  // Ensure valid number of columns
+
+                if (data.length < 18) { 
                     System.err.println("Skipping malformed row: " + line);
                     continue;
                 }
-                
+
                 int employeeId = Integer.parseInt(data[0].trim());
                 String lastName = data[1].trim();
                 String firstName = data[2].trim();
@@ -37,20 +36,28 @@ class EmployeeCSVReader {
                 double phoneAllowance = parseDoubleOrDefault(data[15], 0.0);
                 double clothingAllowance = parseDoubleOrDefault(data[16], 0.0);
                 double hourlyRate = parseDoubleOrDefault(data[18], 0.0);
-                
+
                 CompensationDetails compensationDetails = new CompensationDetails(basicSalary, riceSubsidy, phoneAllowance, clothingAllowance, hourlyRate);
                 GovernmentContributions governmentContributions = new GovernmentContributions(employeeId, compensationDetails);
                 EmploymentStatus employmentStatus = EmploymentStatus.getEmploymentStatusByEmployeeId(employeeId);
 
-                employees.add(new Employee(employeeId, firstName, lastName, position, employmentStatus, compensationDetails, governmentContributions));
+                employeeList.add(new Employee(employeeId, firstName, lastName, position, employmentStatus, compensationDetails, governmentContributions));
             }
-        } catch (IOException e) {
+        } catch (IOException | NumberFormatException e) {
             System.err.println("Error reading employee file: " + e.getMessage());
-        } catch (NumberFormatException e) {
-            System.err.println("Error parsing numeric value: " + e.getMessage());
         }
-        return employees;
+        return employeeList;
     }
+
+    // ✅ Ensure employees are loaded before searching
+    public static Employee getEmployeeById(int employeeId) {
+        ensureEmployeesLoaded();  // Load employees if not already loaded
+        return employees.stream()
+                .filter(emp -> emp.getEmployeeId() == employeeId)
+                .findFirst()
+                .orElse(null);
+    }
+
     private static double parseDoubleOrDefault(String value, double defaultValue) {
         if (value == null || value.trim().isEmpty() || value.equalsIgnoreCase("NA")) {
             return defaultValue;
