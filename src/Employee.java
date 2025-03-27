@@ -1,11 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
-/**
- *
- * @author rejoice
- */
 
 class Employee {
     private final int employeeId;
@@ -16,6 +8,7 @@ class Employee {
     private final CompensationDetails compensationDetails;
     private final GovernmentContributions governmentContributions;
 
+    // Constructor to initialize an Employee object
     public Employee(int employeeId, String firstName, String lastName, String position,
                     EmploymentStatus employmentStatus, CompensationDetails compensationDetails, 
                     GovernmentContributions governmentContributions) {

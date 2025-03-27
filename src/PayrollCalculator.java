@@ -1,3 +1,4 @@
+
 // Interface for Payroll calculations
 public interface PayrollCalculator {
     double calculateEarnings();

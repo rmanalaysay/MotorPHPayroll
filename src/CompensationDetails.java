@@ -1,3 +1,4 @@
+
 // Compensation Details Class
 class CompensationDetails {
     private final double basicSalary;
@@ -6,6 +7,7 @@ class CompensationDetails {
     private final double clothingAllowance;
     private final double hourlyRate;
 
+    //Constructor to initialize the compensation details of an employee
     public CompensationDetails(double basicSalary, double riceSubsidy, double phoneAllowance, double clothingAllowance, double hourlyRate) {
         this.basicSalary = basicSalary;
         this.riceSubsidy = riceSubsidy;
@@ -32,6 +34,7 @@ class CompensationDetails {
     public double getHourlyRate() { 
         return hourlyRate; }
     
+    //Calculates the total benefits (rice subsidy, phone allowance, and clothing allowance)
     public double getTotalBenefits() { 
         return riceSubsidy + phoneAllowance + clothingAllowance; }
 }

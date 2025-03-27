@@ -1,17 +1,10 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 
-/**
- *
- * @author rejoice
- */
 // EmploymentStatus class
 public class EmploymentStatus {
     private int statusId;
     private String statusName;
 
+    // Constructor to initialize an EmploymentStatus object
     public EmploymentStatus(int statusId, String statusName) {
         this.statusId = statusId;
         this.statusName = statusName;
@@ -23,6 +16,7 @@ public class EmploymentStatus {
     public void setStatusId(int statusId) { this.statusId = statusId; }
     public void setStatusName(String statusName) { this.statusName = statusName; }
     
+    // Retrieves the employment status of an employee based on their employee ID
     public static EmploymentStatus getEmploymentStatusByEmployeeId(int employeeId) {
         return switch (employeeId) {
             case 101 -> new EmploymentStatus(1, "Regular");

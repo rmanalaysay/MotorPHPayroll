@@ -1,20 +1,15 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
-/**
- *
- * @author rejoice
- */
+
 abstract class Deduction {
     protected final int employeeId;
     protected final String type;
 
+    //Constructor to initialize a deduction for a specific employee
     public Deduction(int employeeId, String type) {
         this.employeeId = employeeId;
         this.type = type;
     }
-
+    
+    //Abstract method to calculate the deduction amount
     public abstract double calculateDeduction();
 
     public int getEmployeeId() { return employeeId; }

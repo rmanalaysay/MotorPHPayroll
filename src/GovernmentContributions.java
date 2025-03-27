@@ -1,16 +1,9 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 
-/**
- *
- * @author rejoice
- */
 class GovernmentContributions implements GovernmentContributionsCalculator {
     private final int employeeId;
     private final CompensationDetails compensationDetails; // Store CompensationDetails
 
+    // Constructor initializes GovernmentContributions with employee details
     public GovernmentContributions(int employeeId, CompensationDetails compensationDetails) {
         this.employeeId = employeeId;
         this.compensationDetails = compensationDetails;

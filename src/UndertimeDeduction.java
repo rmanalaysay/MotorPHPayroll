@@ -1,22 +1,17 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
-/**
- *
- * @author rejoice
- */
-// Undertime Deduction
-class UndertimeDeduction extends Deduction {
-    private int minutesUndertime;
-    private static final double RATE_PER_MINUTE = 2.0; // Example rate
 
-    public UndertimeDeduction(int employeeId, int minutesUndertime) {
-        super(employeeId, "Undertime Deduction");
-        this.minutesUndertime = Math.max(0, minutesUndertime);
+// Undertime Deduction
+public class UndertimeDeduction extends Deduction {
+    private final int minutesUndertime;
+    private static final double RATE_PER_MINUTE = 2.0;
+
+    //Constructor initializes an UndertimeDeduction based on attendance data
+    public UndertimeDeduction(Attendance attendance) {
+        super(attendance.getEmployeeId(), "Undertime Deduction");
+        this.minutesUndertime = attendance.getMinutesUndertime();
     }
 
     @Override
+    //Calculates the total undertime deduction
     public double calculateDeduction() {
         return minutesUndertime * RATE_PER_MINUTE;
     }

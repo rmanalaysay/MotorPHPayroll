@@ -1,3 +1,4 @@
+
 import java.io.*;
 import java.nio.file.*;
 import java.time.LocalDate;
@@ -12,11 +13,13 @@ class LeavesCSVReader {
     public static List<LeaveRequest> loadLeaveRequests(Map<Integer, Employee> employees) {
         List<LeaveRequest> leaveRequests = new ArrayList<>();
 
+        // Check if the leave request file exists
         if (!Files.exists(Paths.get(LEAVE_FILE))) {
             System.out.println("Leave request file not found. Returning empty list.");
             return leaveRequests;
         }
 
+        // Read the file and parse leave requests
         try (BufferedReader br = new BufferedReader(new FileReader(LEAVE_FILE))) {
             String line;
             boolean isFirstLine = true; // To skip header if present
@@ -34,6 +37,7 @@ class LeavesCSVReader {
                 }
 
                 try {
+                    // Parse data from CSV row
                     int employeeId = Integer.parseInt(data[0].trim());
                     String lastName = data[1].trim();
                     String firstName = data[2].trim();
@@ -41,12 +45,14 @@ class LeavesCSVReader {
                     LocalDate startDate = LocalDate.parse(data[4].trim(), FORMATTER);
                     LocalDate endDate = LocalDate.parse(data[5].trim(), FORMATTER);
 
+                    // Retrieve employee from the map
                     Employee employee = employees.get(employeeId);
                     if (employee == null) {
                         System.err.println("Warning: Employee ID " + employeeId + " not found. Skipping entry.");
                         continue;
                     }
 
+                    // Add leave request to the list
                     leaveRequests.add(new LeaveRequest(employee, leaveType, startDate, endDate));
 
                 } catch (Exception e) {
@@ -87,6 +93,7 @@ class LeavesCSVReader {
                 // Move to a new line before writing new data
                 writer.newLine();  
                 
+                // Format leave request data into a CSV row
                 String newEntry = leaveRequest.getEmployee().getEmployeeId() + "," +
                                   leaveRequest.getEmployee().getLastName() + "," +
                                   leaveRequest.getEmployee().getFirstName() + "," +

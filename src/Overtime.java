@@ -1,28 +1,26 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
-/**
- *
- * @author rejoice
- */
+
+import java.util.List;
+
 // Overtime Class
-class Overtime {
-    private final int employeeId;
-    private final int hoursWorked;
-    private static final double OVERTIME_MULTIPLIER = 1.5; // 1.5x standard pay
+public class Overtime {
+    private final List<Attendance> attendanceRecords;
+    private static final double OVERTIME_MULTIPLIER = 1.25;
 
-    public Overtime(int employeeId, int hoursWorked) {
-        this.employeeId = employeeId;
-        this.hoursWorked = Math.max(0, hoursWorked);
+    //Constructs an Overtime object with a list of attendance records
+    public Overtime(List<Attendance> attendanceRecords) {
+        this.attendanceRecords = attendanceRecords;
     }
 
-    public int getHoursWorked() { // Added getter method
-        return hoursWorked;
-    }
+    //Calculates the total overtime pay for an employee
+    public double calculateTotalOvertimePay(double hourlyRate) {
+        double totalOvertimeHours = 0;
 
-    public static double calculateOvertimePay(double totalHoursWorked, double hourlyRate) {
-        double overtimeHours = Math.max(0, totalHoursWorked - 160); // Assuming 160 regular hours
-        return overtimeHours * hourlyRate * OVERTIME_MULTIPLIER;
+        // Sum up all overtime hours from the attendance records
+        for (Attendance attendance : attendanceRecords) {
+            totalOvertimeHours += attendance.getOvertimeHours();
+        }
+
+        // Compute total overtime pay
+        return totalOvertimeHours * hourlyRate * OVERTIME_MULTIPLIER;
     }
 }
